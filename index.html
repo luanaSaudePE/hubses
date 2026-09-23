@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Central de acesso</title>
+  <script>
+    try {
+      const saved = JSON.parse(localStorage.getItem("ses-hub-v1") || "{}");
+      if (saved.theme === "light") document.documentElement.dataset.theme = "light";
+    } catch { /* mantém o tema escuro */ }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --label: #64748b;
+      --line: rgba(51, 65, 85, 0.85);
+      --search: #1e293b;
+      --glow: rgba(59, 130, 246, 0.16);
+      --icon-bg: rgba(59, 130, 246, 0.12);
+      --icon: #60a5fa;
+      --placeholder: #64748b;
+      --kbd-bg: rgba(15, 23, 42, 0.55);
+      --kbd-line: #475569;
+      --empty: rgba(30, 41, 59, 0.65);
+      --fav: #ddd6fe;
+      --fav-bg: rgba(109, 94, 252, 0.15);
+      --fav-line: rgba(109, 94, 252, 0.35);
+      --add-bg: #1e293b;
+      --add-text: #f1f5f9;
+      --add-line: rgba(71, 85, 105, 0.9);
+      --meta: #64748b;
+      --meta-empty: #93c5fd;
+      --card-hover: rgba(96, 165, 250, 0.55);
+      --shadow: none;
+      --hover: rgba(15, 23, 42, 0.55);
+      --dot: #3b82f6;
+    }
+    html[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f4f5f8;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --label: #94a3b8;
+      --line: #e6e8ee;
+      --search: #ffffff;
+      --glow: rgba(109, 94, 252, 0.16);
+      --icon-bg: rgba(109, 94, 252, 0.1);
+      --icon: #6d5efc;
+      --placeholder: #94a3b8;
+      --kbd-bg: #f8fafc;
+      --kbd-line: #e2e8f0;
+      --empty: #ffffff;
+      --fav: #6d5efc;
+      --fav-bg: #efeefe;
+      --fav-line: #e4e0ff;
+      --add-bg: #ffffff;
+      --add-text: #334155;
+      --add-line: #e6e8ee;
+      --meta: #94a3b8;
+      --meta-empty: #6d5efc;
+      --card-hover: rgba(109, 94, 252, 0.4);
+      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      --hover: #f1f5f9;
+      --dot: #6d5efc;
+    }
+    ::selection { background: rgba(109, 94, 252, 0.28); }
+    .kbd { font-family: inherit; }
+    input[type="search"]::-webkit-search-cancel-button { display: none; }
+    body { background: var(--bg); color: var(--text); }
+    .glow { background: radial-gradient(ellipse at top, var(--glow), transparent 65%); }
+    .eyebrow { color: var(--label); }
+    .title, .section-title, .tool-name, .empty-title { color: var(--text); }
+    .subtitle, .section-count, .status, .tool-meta, .date-pill { color: var(--muted); }
+    .date-pill, .theme-toggle, .add-btn, .search-field, .tool-card, .empty-panel {
+      border-color: var(--line);
+      background: var(--card);
+    }
+    .search-field { background: var(--search); color: var(--text); }
+    .search-field::placeholder { color: var(--placeholder); }
+    .search-field:focus, #shortcut-form input:focus, #shortcut-form select:focus {
+      border-color: #7c6cf0;
+      box-shadow: 0 0 0 3px rgba(124, 108, 240, 0.28);
+      outline: none;
+    }
+    .search-icon, .date-pill svg, .theme-toggle svg { color: inherit; }
+    .date-pill svg { color: var(--placeholder); }
+    .kbd-key { border-color: var(--kbd-line); background: var(--kbd-bg); color: var(--muted); }
+    .fav-btn { border-color: var(--fav-line); background: var(--fav-bg); color: var(--fav); }
+    .fav-btn svg { fill: currentColor; }
+    .fav-btn.is-on { border-color: #6d5efc; background: #6d5efc; color: #fff; }
+    .add-btn { background: var(--add-bg); color: var(--add-text); }
+    .add-btn:hover, .theme-toggle:hover, .ghost-btn:hover { background: var(--hover); }
+    .section-dot { background: var(--dot); }
+    .tool-card { box-shadow: var(--shadow); transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
+    .tool-card:hover { transform: translateY(-2px); border-color: var(--card-hover); }
+    .tool-card.is-empty { border-style: dashed; background: var(--empty); }
+    .tool-card.is-empty:hover { transform: none; }
+    .tool-card.is-empty .tool-meta { color: var(--meta-empty); }
+    .tool-icon { background: var(--icon-bg); color: var(--icon); }
+    .ghost-btn, .star-btn { color: var(--muted); }
+    .star-btn.is-on { color: #fbbf24; }
+    .empty-panel { background: var(--empty); }
+    .empty-icon { color: var(--placeholder); }
+    #board { scroll-margin-top: 1rem; }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+  <div class="glow pointer-events-none fixed inset-x-0 top-0 h-72"></div>
+
+  <div class="relative mx-auto max-w-6xl px-5 pb-20 pt-10 sm:px-8 sm:pt-14">
+    <header>
+      <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p class="eyebrow text-[11px] font-semibold uppercase tracking-[0.22em]">Central de acesso</p>
+          <h1 class="title mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+            Bom trabalho, <span class="whitespace-nowrap">Luana <span class="text-amber-300" aria-hidden="true">✦</span></span>
+          </h1>
+          <p class="subtitle mt-2 max-w-xl text-sm leading-relaxed sm:text-[15px]">
+            Tudo que você precisa para organizar, acompanhar e entregar seu trabalho em um só lugar.
+          </p>
+        </div>
+        <div class="flex shrink-0 items-center gap-2 self-start">
+          <button id="theme-toggle" type="button" class="theme-toggle inline-flex h-10 w-10 items-center justify-center rounded-full border" aria-label="Usar tema claro">
+            <i data-lucide="sun" class="h-4 w-4"></i>
+          </button>
+          <div class="date-pill inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm">
+            <i data-lucide="clock" class="h-4 w-4"></i>
+            <span id="today"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex flex-col gap-3 lg:flex-row lg:items-center">
+        <label class="relative block min-w-0 flex-1">
+          <span class="sr-only">Buscar uma ferramenta</span>
+          <i data-lucide="search" class="search-icon pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2"></i>
+          <input
+            id="search"
+            type="search"
+            placeholder="Buscar uma ferramenta..."
+            autocomplete="off"
+            class="search-field h-12 w-full rounded-xl border pl-11 pr-24 text-sm"
+          />
+          <kbd id="search-kbd" class="kbd kbd-key pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 items-center rounded-md border px-1.5 py-0.5 text-[11px] font-medium sm:inline-flex">Ctrl K</kbd>
+        </label>
+
+        <div class="flex gap-3">
+          <button
+            id="favorites-toggle"
+            type="button"
+            aria-pressed="false"
+            class="fav-btn inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium transition lg:flex-none"
+          >
+            <i data-lucide="star" class="h-4 w-4"></i>
+            Favoritos
+          </button>
+          <button
+            id="add-shortcut"
+            type="button"
+            class="add-btn inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium transition lg:flex-none"
+          >
+            <i data-lucide="plus" class="h-4 w-4"></i>
+            Adicionar atalho
+          </button>
+        </div>
+      </div>
+      <p id="status" class="status mt-3 hidden text-sm" aria-live="polite"></p>
+    </header>
+
+    <main id="board" class="mt-10 space-y-10"></main>
+  </div>
+
+  <div id="modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" data-close></div>
+    <div class="relative mx-auto mt-[12vh] w-[min(100%-2rem,30rem)] rounded-[28px] bg-white px-7 pb-7 pt-6 text-slate-900 shadow-2xl shadow-black/30">
+      <button type="button" class="absolute right-5 top-5 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" data-close aria-label="Fechar">
+        <i data-lucide="x" class="h-4 w-4"></i>
+      </button>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Personalize seu hub</p>
+      <h2 id="modal-title" class="mt-3 text-[1.7rem] font-semibold leading-tight tracking-tight text-slate-900">Adicionar ferramenta</h2>
+      <p id="modal-subtitle" class="mt-2 text-sm leading-relaxed text-slate-500">Inclua um atalho personalizado para deixar este espaço com a sua cara.</p>
+
+      <form id="shortcut-form" class="mt-6 space-y-4">
+        <div>
+          <label for="field-name" class="mb-2 block text-sm font-medium text-slate-700">Nome da ferramenta</label>
+          <input id="field-name" required maxlength="60" placeholder="Ex.: Figma" class="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#7c6cf0] focus:ring-2 focus:ring-[#7c6cf0]/25 disabled:bg-slate-50 disabled:text-slate-400" />
+        </div>
+        <div>
+          <label for="field-url" class="mb-2 block text-sm font-medium text-slate-700">URL</label>
+          <input id="field-url" type="url" placeholder="https://..." class="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#7c6cf0] focus:ring-2 focus:ring-[#7c6cf0]/25" />
+        </div>
+        <div>
+          <label for="field-category" class="mb-2 block text-sm font-medium text-slate-700">Categoria</label>
+          <div class="relative">
+            <select id="field-category" class="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm text-slate-800 outline-none focus:border-[#7c6cf0] focus:ring-2 focus:ring-[#7c6cf0]/25 disabled:bg-slate-50 disabled:text-slate-400"></select>
+            <i data-lucide="chevron-down" class="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"></i>
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-3 pt-3">
+          <button id="delete-shortcut" type="button" class="mr-auto hidden text-sm font-medium text-rose-500 hover:text-rose-600">Excluir</button>
+          <button type="button" class="h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-medium text-slate-700 hover:bg-slate-50" data-close>Cancelar</button>
+          <button id="submit-shortcut" type="submit" class="h-11 rounded-xl bg-[#6d5efc] px-5 text-sm font-medium text-white hover:bg-[#5c4eeb]">Adicionar atalho</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    const STORAGE_KEY = "ses-hub-v1";
+
+    const CATEGORIES = [
+      { id: "gestao", name: "Gestão e Projetos", short: "Gestão" },
+      { id: "suporte", name: "Suporte e Documentação", short: "Suporte" },
+      { id: "ia", name: "IA e Design", short: "IA e Design" },
+      { id: "comunicacao", name: "Comunicação e Outros", short: "Comunicação" },
+    ];
+
+    const ICONS = [
+      "link", "star", "globe", "folder", "calendar-days", "mail", "bot", "sparkles",
+      "pen-tool", "cloud", "book-open", "headset", "chart-column", "list-todo", "door-open", "wrench",
+    ];
+
+    const DEFAULTS = [
+      { id: "redmine", name: "Redmine", url: "https://projetosti.saude.pe.gov.br/", category: "gestao", icon: "list-todo" },
+      { id: "miro", name: "Miro", url: "https://miro.com/app/board/uXjVJs_eJ3I=/", category: "gestao", icon: "presentation" },
+      { id: "cronograma", name: "Cronograma SM", url: "https://checklistsm.vercel.app/", category: "gestao", icon: "calendar-days" },
+      { id: "metricas", name: "Métricas", url: "https://metricassprint.vercel.app/#sp31", category: "gestao", icon: "chart-column" },
+      { id: "itsm", name: "Chamados ITSM", url: "https://itsm.saude.pe.gov.br/portalservicos/pages/experienceCenter/experienceCenter.load", category: "suporte", icon: "headset" },
+      { id: "manuais", name: "Manuais TI", url: "https://docsti.saude.pe.gov.br/", category: "suporte", icon: "book-open" },
+      { id: "sei", name: "SEI PE", url: "https://sei.pe.gov.br/sip/login.php?sigla_orgao_sistema=GOVPE&sigla_sistema=SEI", category: "suporte", icon: "file-text" },
+      { id: "onedrive", name: "OneDrive SES-PE", url: "https://onedrive.live.com/my?id=%2Fpersonal%2F070a22d7cd5c1ca2%2FDocuments%2FSES%2DPE&viewid=46a81358%2D6e82%2D4fdd%2D9922%2D491933ab4acd", category: "suporte", icon: "cloud" },
+      { id: "gemini", name: "Gemini", url: "https://gemini.google.com", category: "ia", icon: "sparkles" },
+      { id: "cursor", name: "Cursor", url: "https://cursor.com", category: "ia", icon: "terminal" },
+      { id: "claude", name: "Claude", url: "https://claude.ai", category: "ia", icon: "bot" },
+      { id: "chatgpt", name: "ChatGPT", url: "https://chatgpt.com", category: "ia", icon: "message-circle" },
+      { id: "manus", name: "Manus", url: "", category: "ia", icon: "cpu" },
+      { id: "figma", name: "Figma", url: "", category: "ia", icon: "pen-tool" },
+      { id: "email", name: "E-mail (SOGo)", url: "https://sogo.pe.gov.pe.gov.br/SOGo/so/luana.brito/Mail/view#!/Mail/0/INBOX", category: "comunicacao", icon: "mail" },
+      { id: "interna", name: "Ferramenta Interna", url: "", category: "comunicacao", icon: "wrench" },
+      { id: "sala", name: "Reserva de Sala", url: "", category: "comunicacao", icon: "door-open" },
+    ];
+
+    const board = document.getElementById("board");
+    const searchInput = document.getElementById("search");
+    const favoritesToggle = document.getElementById("favorites-toggle");
+    const statusEl = document.getElementById("status");
+    const modal = document.getElementById("modal");
+    const form = document.getElementById("shortcut-form");
+    const fieldName = document.getElementById("field-name");
+    const fieldUrl = document.getElementById("field-url");
+    const fieldCategory = document.getElementById("field-category");
+    const deleteBtn = document.getElementById("delete-shortcut");
+    const modalTitle = document.getElementById("modal-title");
+    const modalSubtitle = document.getElementById("modal-subtitle");
+    const submitShortcut = document.getElementById("submit-shortcut");
+
+    let favoritesOnly = false;
+    let editing = null;
+    let selectedIcon = "link";
+
+    function loadState() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        return {
+          favorites: Array.isArray(raw.favorites) ? raw.favorites : [],
+          links: raw.links && typeof raw.links === "object" ? raw.links : {},
+          custom: Array.isArray(raw.custom) ? raw.custom : [],
+          theme: raw.theme === "light" ? "light" : "dark",
+        };
+      } catch {
+        return { favorites: [], links: {}, custom: [], theme: "dark" };
+      }
+    }
+
+    let state = loadState();
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function esc(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[char]));
+    }
+
+    function safeUrl(url) {
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol === "http:" || parsed.protocol === "https:") return parsed.href;
+      } catch { /* ignore */ }
+      return "";
+    }
+
+    function normalize(value) {
+      return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+    }
+
+    function tools() {
+      const defaults = DEFAULTS.map((tool) => {
+        const override = state.links[tool.id];
+        return {
+          ...tool,
+          url: typeof override === "string" ? override : tool.url,
+          custom: false,
+        };
+      });
+      const custom = state.custom
+        .filter((tool) => tool && tool.id && tool.name && CATEGORIES.some((category) => category.id === tool.category))
+        .map((tool) => ({
+          id: String(tool.id),
+          name: String(tool.name),
+          url: String(tool.url || ""),
+          category: tool.category,
+          icon: ICONS.includes(tool.icon) ? tool.icon : "link",
+          custom: true,
+        }));
+      return defaults.concat(custom);
+    }
+
+    function hostOf(url) {
+      const safe = safeUrl(url);
+      if (!safe) return "";
+      try {
+        return new URL(safe).hostname.replace(/^www\./, "");
+      } catch {
+        return "";
+      }
+    }
+
+    function renderIcons() {
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function render() {
+      const query = normalize(searchInput.value);
+      const list = tools().filter((tool) => {
+        const matchesQuery = !query || normalize(tool.name).includes(query);
+        const matchesFavorites = !favoritesOnly || state.favorites.includes(tool.id);
+        return matchesQuery && matchesFavorites;
+      });
+
+      const sections = CATEGORIES.map((category) => {
+        const items = list.filter((tool) => tool.category === category.id);
+        if (!items.length) return "";
+        return `
+          <section>
+            <div class="mb-4 flex items-center gap-2.5">
+              <span class="section-dot h-1.5 w-1.5 rounded-full"></span>
+              <h2 class="section-title text-base font-semibold">${esc(category.name)}</h2>
+              <span class="section-count text-xs">${items.length}</span>
+            </div>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              ${items.map(renderCard).join("")}
+            </div>
+          </section>
+        `;
+      }).join("");
+
+      if (!sections) {
+        const emptyTitle = favoritesOnly && !query
+          ? "Nenhuma favorita ainda"
+          : "Nenhuma ferramenta encontrada";
+        const emptyText = favoritesOnly && !query
+          ? "Clique na estrela de um card para fixá-lo aqui."
+          : "Tente outro nome ou adicione um atalho novo.";
+        board.innerHTML = `
+          <div class="empty-panel rounded-2xl border border-dashed px-6 py-16 text-center">
+            <i data-lucide="search-x" class="empty-icon mx-auto h-8 w-8"></i>
+            <p class="empty-title mt-4 text-base font-medium">${emptyTitle}</p>
+            <p class="status mt-1 text-sm">${emptyText}</p>
+          </div>
+        `;
+      } else {
+        board.innerHTML = sections;
+      }
+
+      const filtering = Boolean(query) || favoritesOnly;
+      statusEl.classList.toggle("hidden", !filtering);
+      statusEl.textContent = filtering
+        ? `${list.length} ${list.length === 1 ? "ferramenta" : "ferramentas"}`
+        : "";
+
+      favoritesToggle.setAttribute("aria-pressed", String(favoritesOnly));
+      favoritesToggle.classList.toggle("is-on", favoritesOnly);
+
+      const searchKbd = document.getElementById("search-kbd");
+      searchKbd.classList.add("hidden");
+      searchKbd.classList.toggle("sm:inline-flex", !searchInput.value);
+      renderIcons();
+    }
+
+    function renderCard(tool) {
+      const href = safeUrl(tool.url);
+      const favorite = state.favorites.includes(tool.id);
+      const meta = href ? hostOf(href) : "Adicionar link";
+      const starFill = favorite ? 'fill="currentColor"' : 'fill="none"';
+
+      const body = `
+        <span class="tool-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+          <i data-lucide="${esc(tool.icon)}" class="h-5 w-5"></i>
+        </span>
+        <span class="min-w-0 pr-8">
+          <span class="tool-name block truncate text-[15px] font-medium">${esc(tool.name)}</span>
+          <span class="tool-meta mt-0.5 block truncate text-xs">${esc(meta)}</span>
+        </span>
+      `;
+
+      const openControl = href
+        ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer" class="flex min-w-0 flex-1 items-start gap-3 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50">${body}</a>`
+        : `<button type="button" data-edit="${esc(tool.id)}" class="flex min-w-0 flex-1 items-start gap-3 rounded-2xl text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50">${body}</button>`;
+
+      return `
+        <article class="tool-card group relative flex items-start rounded-2xl border p-4 ${href ? "" : "is-empty"}">
+          ${openControl}
+          <span class="absolute right-3 top-3 z-10 flex items-center gap-1">
+            <button type="button" data-edit="${esc(tool.id)}" class="ghost-btn rounded-md p-1 opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100" aria-label="Editar ${esc(tool.name)}">
+              <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+            </button>
+            <button type="button" data-fav="${esc(tool.id)}" class="star-btn rounded-md p-1 ${favorite ? "is-on" : ""}" aria-label="${favorite ? "Remover dos favoritos" : "Favoritar"} ${esc(tool.name)}" aria-pressed="${favorite}">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" ${starFill} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </button>
+          </span>
+        </article>
+      `;
+    }
+
+    function fillCategories(selected) {
+      fieldCategory.innerHTML = CATEGORIES.map((category) => `
+        <option value="${category.id}" ${category.id === selected ? "selected" : ""}>${esc(category.short)}</option>
+      `).join("");
+    }
+
+    function openModal(tool) {
+      editing = tool;
+      const isDefault = tool && !tool.custom;
+      const hasLink = tool && safeUrl(tool.url);
+      selectedIcon = tool && tool.icon ? tool.icon : "link";
+      modalTitle.textContent = hasLink ? "Editar ferramenta" : "Adicionar ferramenta";
+      modalSubtitle.textContent = hasLink
+        ? "Atualize o atalho para deixar este espaço com a sua cara."
+        : "Inclua um atalho personalizado para deixar este espaço com a sua cara.";
+      submitShortcut.textContent = hasLink ? "Salvar" : "Adicionar atalho";
+      fieldName.value = tool ? tool.name : "";
+      fieldUrl.value = tool ? tool.url : "";
+      fieldName.disabled = Boolean(isDefault);
+      fieldCategory.disabled = Boolean(isDefault);
+      deleteBtn.classList.toggle("hidden", !(tool && tool.custom));
+      fillCategories(tool ? tool.category : CATEGORIES[0].id);
+      modal.classList.remove("hidden");
+      (isDefault ? fieldUrl : fieldName).focus();
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+      editing = null;
+      form.reset();
+      fieldName.disabled = false;
+      fieldCategory.disabled = false;
+    }
+
+    document.getElementById("today").textContent = (() => {
+      const text = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    })();
+
+    const shortcutLabel = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K";
+    document.getElementById("search-kbd").textContent = shortcutLabel;
+
+    searchInput.addEventListener("input", render);
+    favoritesToggle.addEventListener("click", () => {
+      favoritesOnly = !favoritesOnly;
+      render();
+    });
+    document.getElementById("add-shortcut").addEventListener("click", () => openModal(null));
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      state.theme = state.theme === "light" ? "dark" : "light";
+      saveState();
+      applyTheme(state.theme);
+    });
+
+    function applyTheme(theme) {
+      const next = theme === "light" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", next === "light" ? "#f4f5f8" : "#0f172a");
+      const button = document.getElementById("theme-toggle");
+      const toLight = next === "dark";
+      button.setAttribute("aria-label", toLight ? "Usar tema claro" : "Usar tema escuro");
+      button.innerHTML = `<i data-lucide="${toLight ? "sun" : "moon"}" class="h-4 w-4"></i>`;
+      renderIcons();
+    }
+
+    board.addEventListener("click", (event) => {
+      const fav = event.target.closest("[data-fav]");
+      if (fav) {
+        const id = fav.getAttribute("data-fav");
+        state.favorites = state.favorites.includes(id)
+          ? state.favorites.filter((item) => item !== id)
+          : state.favorites.concat(id);
+        saveState();
+        render();
+        return;
+      }
+      const edit = event.target.closest("[data-edit]");
+      if (!edit) return;
+      if (edit.closest("a")) return;
+      const tool = tools().find((item) => item.id === edit.getAttribute("data-edit"));
+      if (tool) openModal(tool);
+    });
+
+    modal.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close]")) closeModal();
+    });
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const name = fieldName.value.trim();
+      const url = fieldUrl.value.trim();
+      if (url && !safeUrl(url)) {
+        fieldUrl.setCustomValidity("Use um link que comece com http:// ou https://");
+        fieldUrl.reportValidity();
+        return;
+      }
+      fieldUrl.setCustomValidity("");
+      const category = fieldCategory.value;
+
+      if (!editing) {
+        state.custom.push({
+          id: `custom-${Date.now()}`,
+          name,
+          url,
+          category,
+          icon: selectedIcon,
+        });
+      } else if (editing.custom) {
+        state.custom = state.custom.map((tool) => tool.id === editing.id
+          ? { ...tool, name, url, category, icon: selectedIcon }
+          : tool);
+      } else {
+        state.links[editing.id] = url;
+      }
+      saveState();
+      closeModal();
+      render();
+    });
+
+    deleteBtn.addEventListener("click", () => {
+      if (!editing || !editing.custom) return;
+      state.custom = state.custom.filter((tool) => tool.id !== editing.id);
+      state.favorites = state.favorites.filter((id) => id !== editing.id);
+      saveState();
+      closeModal();
+      render();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      const meta = event.metaKey || event.ctrlKey;
+      if (meta && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        if (!modal.classList.contains("hidden")) return;
+        searchInput.focus();
+        searchInput.select();
+      }
+      if (event.key === "Escape") {
+        if (!modal.classList.contains("hidden")) closeModal();
+        else if (document.activeElement === searchInput && searchInput.value) {
+          searchInput.value = "";
+          render();
+        }
+      }
+    });
+
+    fieldUrl.addEventListener("input", () => fieldUrl.setCustomValidity(""));
+    applyTheme(state.theme);
+    render();
+  </script>
+</body>
+</html>
