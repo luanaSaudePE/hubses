@@ -8,7 +8,8 @@
   <script>
     try {
       const saved = JSON.parse(localStorage.getItem("ses-hub-v1") || "{}");
-      if (saved.theme === "light") document.documentElement.dataset.theme = "light";
+      const preferences = JSON.parse(localStorage.getItem("ses-hub-preferences-v2") || JSON.stringify(saved));
+      if (preferences.theme === "light") document.documentElement.dataset.theme = "light";
     } catch { /* mantém o tema escuro */ }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -99,7 +100,7 @@
     }
     .search-field { background: var(--search); color: var(--text); }
     .search-field::placeholder { color: var(--placeholder); }
-    .search-field:focus, #shortcut-form input:focus, #shortcut-form select:focus {
+    .search-field:focus {
       border-color: #7c6cf0;
       box-shadow: 0 0 0 3px rgba(124, 108, 240, 0.28);
       outline: none;
@@ -176,55 +177,12 @@
             <i data-lucide="star" class="h-4 w-4"></i>
             Favoritos
           </button>
-          <button
-            id="add-shortcut"
-            type="button"
-            class="add-btn inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium transition lg:flex-none"
-          >
-            <i data-lucide="plus" class="h-4 w-4"></i>
-            Adicionar atalho
-          </button>
         </div>
       </div>
       <p id="status" class="status mt-3 hidden text-sm" aria-live="polite"></p>
     </header>
 
     <main id="board" class="mt-10 space-y-10"></main>
-  </div>
-
-  <div id="modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" data-close></div>
-    <div class="relative mx-auto mt-[12vh] w-[min(100%-2rem,30rem)] rounded-[28px] bg-white px-7 pb-7 pt-6 text-slate-900 shadow-2xl shadow-black/30">
-      <button type="button" class="absolute right-5 top-5 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" data-close aria-label="Fechar">
-        <i data-lucide="x" class="h-4 w-4"></i>
-      </button>
-      <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Personalize seu hub</p>
-      <h2 id="modal-title" class="mt-3 text-[1.7rem] font-semibold leading-tight tracking-tight text-slate-900">Adicionar ferramenta</h2>
-      <p id="modal-subtitle" class="mt-2 text-sm leading-relaxed text-slate-500">Inclua um atalho personalizado para deixar este espaço com a sua cara.</p>
-
-      <form id="shortcut-form" class="mt-6 space-y-4">
-        <div>
-          <label for="field-name" class="mb-2 block text-sm font-medium text-slate-700">Nome da ferramenta</label>
-          <input id="field-name" required maxlength="60" placeholder="Ex.: Figma" class="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#7c6cf0] focus:ring-2 focus:ring-[#7c6cf0]/25 disabled:bg-slate-50 disabled:text-slate-400" />
-        </div>
-        <div>
-          <label for="field-url" class="mb-2 block text-sm font-medium text-slate-700">URL</label>
-          <input id="field-url" type="url" placeholder="https://..." class="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#7c6cf0] focus:ring-2 focus:ring-[#7c6cf0]/25" />
-        </div>
-        <div>
-          <label for="field-category" class="mb-2 block text-sm font-medium text-slate-700">Categoria</label>
-          <div class="relative">
-            <select id="field-category" class="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 pr-10 text-sm text-slate-800 outline-none focus:border-[#7c6cf0] focus:ring-2 focus:ring-[#7c6cf0]/25 disabled:bg-slate-50 disabled:text-slate-400"></select>
-            <i data-lucide="chevron-down" class="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"></i>
-          </div>
-        </div>
-        <div class="flex items-center justify-end gap-3 pt-3">
-          <button id="delete-shortcut" type="button" class="mr-auto hidden text-sm font-medium text-rose-500 hover:text-rose-600">Excluir</button>
-          <button type="button" class="h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-medium text-slate-700 hover:bg-slate-50" data-close>Cancelar</button>
-          <button id="submit-shortcut" type="submit" class="h-11 rounded-xl bg-[#6d5efc] px-5 text-sm font-medium text-white hover:bg-[#5c4eeb]">Adicionar atalho</button>
-        </div>
-      </form>
-    </div>
   </div>
 
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -236,11 +194,6 @@
       { id: "suporte", name: "Suporte e Documentação", short: "Suporte" },
       { id: "ia", name: "IA e Design", short: "IA e Design" },
       { id: "comunicacao", name: "Comunicação e Outros", short: "Comunicação" },
-    ];
-
-    const ICONS = [
-      "link", "star", "globe", "folder", "calendar-days", "mail", "bot", "sparkles",
-      "pen-tool", "cloud", "book-open", "headset", "chart-column", "list-todo", "door-open", "wrench",
     ];
 
     const DEFAULTS = [
@@ -267,38 +220,25 @@
     const searchInput = document.getElementById("search");
     const favoritesToggle = document.getElementById("favorites-toggle");
     const statusEl = document.getElementById("status");
-    const modal = document.getElementById("modal");
-    const form = document.getElementById("shortcut-form");
-    const fieldName = document.getElementById("field-name");
-    const fieldUrl = document.getElementById("field-url");
-    const fieldCategory = document.getElementById("field-category");
-    const deleteBtn = document.getElementById("delete-shortcut");
-    const modalTitle = document.getElementById("modal-title");
-    const modalSubtitle = document.getElementById("modal-subtitle");
-    const submitShortcut = document.getElementById("submit-shortcut");
-
     let favoritesOnly = false;
-    let editing = null;
-    let selectedIcon = "link";
 
     function loadState() {
       try {
-        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        const raw = JSON.parse(localStorage.getItem("ses-hub-preferences-v2") || localStorage.getItem(STORAGE_KEY) || "{}");
         return {
           favorites: Array.isArray(raw.favorites) ? raw.favorites : [],
-          links: raw.links && typeof raw.links === "object" ? raw.links : {},
-          custom: Array.isArray(raw.custom) ? raw.custom : [],
           theme: raw.theme === "light" ? "light" : "dark",
         };
       } catch {
-        return { favorites: [], links: {}, custom: [], theme: "dark" };
+        return { favorites: [], theme: "dark" };
       }
     }
 
     let state = loadState();
 
     function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      try { localStorage.setItem("ses-hub-preferences-v2", JSON.stringify(state)); }
+      catch { /* Preferências continuam funcionando nesta sessão. */ }
     }
 
     function esc(value) {
@@ -324,25 +264,7 @@
     }
 
     function tools() {
-      const defaults = DEFAULTS.map((tool) => {
-        const override = state.links[tool.id];
-        return {
-          ...tool,
-          url: typeof override === "string" ? override : tool.url,
-          custom: false,
-        };
-      });
-      const custom = state.custom
-        .filter((tool) => tool && tool.id && tool.name && CATEGORIES.some((category) => category.id === tool.category))
-        .map((tool) => ({
-          id: String(tool.id),
-          name: String(tool.name),
-          url: String(tool.url || ""),
-          category: tool.category,
-          icon: ICONS.includes(tool.icon) ? tool.icon : "link",
-          custom: true,
-        }));
-      return defaults.concat(custom);
+      return DEFAULTS;
     }
 
     function hostOf(url) {
@@ -390,7 +312,7 @@
           : "Nenhuma ferramenta encontrada";
         const emptyText = favoritesOnly && !query
           ? "Clique na estrela de um card para fixá-lo aqui."
-          : "Tente outro nome ou adicione um atalho novo.";
+          : "Tente buscar por outro nome.";
         board.innerHTML = `
           <div class="empty-panel rounded-2xl border border-dashed px-6 py-16 text-center">
             <i data-lucide="search-x" class="empty-icon mx-auto h-8 w-8"></i>
@@ -420,7 +342,7 @@
     function renderCard(tool) {
       const href = safeUrl(tool.url);
       const favorite = state.favorites.includes(tool.id);
-      const meta = href ? hostOf(href) : "Adicionar link";
+      const meta = href ? hostOf(href) : "Em breve";
       const starFill = favorite ? 'fill="currentColor"' : 'fill="none"';
 
       const body = `
@@ -435,55 +357,18 @@
 
       const openControl = href
         ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer" class="flex min-w-0 flex-1 items-start gap-3 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50">${body}</a>`
-        : `<button type="button" data-edit="${esc(tool.id)}" class="flex min-w-0 flex-1 items-start gap-3 rounded-2xl text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50">${body}</button>`;
+        : `<div class="flex min-w-0 flex-1 items-start gap-3 rounded-2xl">${body}</div>`;
 
       return `
         <article class="tool-card group relative flex items-start rounded-2xl border p-4 ${href ? "" : "is-empty"}">
           ${openControl}
           <span class="absolute right-3 top-3 z-10 flex items-center gap-1">
-            <button type="button" data-edit="${esc(tool.id)}" class="ghost-btn rounded-md p-1 opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100" aria-label="Editar ${esc(tool.name)}">
-              <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
-            </button>
             <button type="button" data-fav="${esc(tool.id)}" class="star-btn rounded-md p-1 ${favorite ? "is-on" : ""}" aria-label="${favorite ? "Remover dos favoritos" : "Favoritar"} ${esc(tool.name)}" aria-pressed="${favorite}">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" ${starFill} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </button>
           </span>
         </article>
       `;
-    }
-
-    function fillCategories(selected) {
-      fieldCategory.innerHTML = CATEGORIES.map((category) => `
-        <option value="${category.id}" ${category.id === selected ? "selected" : ""}>${esc(category.short)}</option>
-      `).join("");
-    }
-
-    function openModal(tool) {
-      editing = tool;
-      const isDefault = tool && !tool.custom;
-      const hasLink = tool && safeUrl(tool.url);
-      selectedIcon = tool && tool.icon ? tool.icon : "link";
-      modalTitle.textContent = hasLink ? "Editar ferramenta" : "Adicionar ferramenta";
-      modalSubtitle.textContent = hasLink
-        ? "Atualize o atalho para deixar este espaço com a sua cara."
-        : "Inclua um atalho personalizado para deixar este espaço com a sua cara.";
-      submitShortcut.textContent = hasLink ? "Salvar" : "Adicionar atalho";
-      fieldName.value = tool ? tool.name : "";
-      fieldUrl.value = tool ? tool.url : "";
-      fieldName.disabled = Boolean(isDefault);
-      fieldCategory.disabled = Boolean(isDefault);
-      deleteBtn.classList.toggle("hidden", !(tool && tool.custom));
-      fillCategories(tool ? tool.category : CATEGORIES[0].id);
-      modal.classList.remove("hidden");
-      (isDefault ? fieldUrl : fieldName).focus();
-    }
-
-    function closeModal() {
-      modal.classList.add("hidden");
-      editing = null;
-      form.reset();
-      fieldName.disabled = false;
-      fieldCategory.disabled = false;
     }
 
     document.getElementById("today").textContent = (() => {
@@ -499,7 +384,6 @@
       favoritesOnly = !favoritesOnly;
       render();
     });
-    document.getElementById("add-shortcut").addEventListener("click", () => openModal(null));
     document.getElementById("theme-toggle").addEventListener("click", () => {
       state.theme = state.theme === "light" ? "dark" : "light";
       saveState();
@@ -529,76 +413,23 @@
         render();
         return;
       }
-      const edit = event.target.closest("[data-edit]");
-      if (!edit) return;
-      if (edit.closest("a")) return;
-      const tool = tools().find((item) => item.id === edit.getAttribute("data-edit"));
-      if (tool) openModal(tool);
-    });
-
-    modal.addEventListener("click", (event) => {
-      if (event.target.closest("[data-close]")) closeModal();
-    });
-
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const name = fieldName.value.trim();
-      const url = fieldUrl.value.trim();
-      if (url && !safeUrl(url)) {
-        fieldUrl.setCustomValidity("Use um link que comece com http:// ou https://");
-        fieldUrl.reportValidity();
-        return;
-      }
-      fieldUrl.setCustomValidity("");
-      const category = fieldCategory.value;
-
-      if (!editing) {
-        state.custom.push({
-          id: `custom-${Date.now()}`,
-          name,
-          url,
-          category,
-          icon: selectedIcon,
-        });
-      } else if (editing.custom) {
-        state.custom = state.custom.map((tool) => tool.id === editing.id
-          ? { ...tool, name, url, category, icon: selectedIcon }
-          : tool);
-      } else {
-        state.links[editing.id] = url;
-      }
-      saveState();
-      closeModal();
-      render();
-    });
-
-    deleteBtn.addEventListener("click", () => {
-      if (!editing || !editing.custom) return;
-      state.custom = state.custom.filter((tool) => tool.id !== editing.id);
-      state.favorites = state.favorites.filter((id) => id !== editing.id);
-      saveState();
-      closeModal();
-      render();
     });
 
     document.addEventListener("keydown", (event) => {
       const meta = event.metaKey || event.ctrlKey;
       if (meta && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        if (!modal.classList.contains("hidden")) return;
         searchInput.focus();
         searchInput.select();
       }
       if (event.key === "Escape") {
-        if (!modal.classList.contains("hidden")) closeModal();
-        else if (document.activeElement === searchInput && searchInput.value) {
+        if (document.activeElement === searchInput && searchInput.value) {
           searchInput.value = "";
           render();
         }
       }
     });
 
-    fieldUrl.addEventListener("input", () => fieldUrl.setCustomValidity(""));
     applyTheme(state.theme);
     render();
   </script>
