@@ -1,0 +1,123 @@
+{
+  "tools": [
+    {
+      "id": "redmine",
+      "name": "Redmine",
+      "url": "https://projetosti.saude.pe.gov.br/",
+      "category": "gestao",
+      "icon": "list-todo"
+    },
+    {
+      "id": "miro",
+      "name": "Miro",
+      "url": "https://miro.com/app/board/uXjVJs_eJ3I=/",
+      "category": "gestao",
+      "icon": "presentation"
+    },
+    {
+      "id": "cronograma",
+      "name": "Cronograma SM",
+      "url": "https://checklistsm.vercel.app/",
+      "category": "gestao",
+      "icon": "calendar-days"
+    },
+    {
+      "id": "metricas",
+      "name": "Métricas",
+      "url": "https://metricassprint.vercel.app/#sp31",
+      "category": "gestao",
+      "icon": "chart-column"
+    },
+    {
+      "id": "itsm",
+      "name": "Chamados ITSM",
+      "url": "https://itsm.saude.pe.gov.br/portalservicos/pages/experienceCenter/experienceCenter.load",
+      "category": "suporte",
+      "icon": "headset"
+    },
+    {
+      "id": "manuais",
+      "name": "Manuais TI",
+      "url": "https://docsti.saude.pe.gov.br/",
+      "category": "suporte",
+      "icon": "book-open"
+    },
+    {
+      "id": "sei",
+      "name": "SEI PE",
+      "url": "https://sei.pe.gov.br/sip/login.php?sigla_orgao_sistema=GOVPE&sigla_sistema=SEI",
+      "category": "suporte",
+      "icon": "file-text"
+    },
+    {
+      "id": "onedrive",
+      "name": "OneDrive SES-PE",
+      "url": "https://onedrive.live.com/my?id=%2Fpersonal%2F070a22d7cd5c1ca2%2FDocuments%2FSES%2DPE&viewid=46a81358%2D6e82%2D4fdd%2D9922%2D491933ab4acd",
+      "category": "suporte",
+      "icon": "cloud"
+    },
+    {
+      "id": "gemini",
+      "name": "Gemini",
+      "url": "https://gemini.google.com",
+      "category": "ia",
+      "icon": "sparkles"
+    },
+    {
+      "id": "cursor",
+      "name": "Cursor",
+      "url": "https://cursor.com",
+      "category": "ia",
+      "icon": "terminal"
+    },
+    {
+      "id": "claude",
+      "name": "Claude",
+      "url": "https://claude.ai",
+      "category": "ia",
+      "icon": "bot"
+    },
+    {
+      "id": "chatgpt",
+      "name": "ChatGPT",
+      "url": "https://chatgpt.com",
+      "category": "ia",
+      "icon": "message-circle"
+    },
+    {
+      "id": "manus",
+      "name": "Manus",
+      "url": "",
+      "category": "ia",
+      "icon": "cpu"
+    },
+    {
+      "id": "figma",
+      "name": "Figma",
+      "url": "",
+      "category": "ia",
+      "icon": "pen-tool"
+    },
+    {
+      "id": "email",
+      "name": "E-mail (SOGo)",
+      "url": "https://sogo.pe.gov.pe.gov.br/SOGo/so/luana.brito/Mail/view#!/Mail/0/INBOX",
+      "category": "comunicacao",
+      "icon": "mail"
+    },
+    {
+      "id": "interna",
+      "name": "Ferramenta Interna",
+      "url": "",
+      "category": "comunicacao",
+      "icon": "wrench"
+    },
+    {
+      "id": "sala",
+      "name": "Reserva de Sala",
+      "url": "",
+      "category": "comunicacao",
+      "icon": "door-open"
+    }
+  ]
+}

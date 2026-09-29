@@ -1,0 +1,6 @@
+{
+  "functions": { "api/catalog.js": { "maxDuration": 60 } },
+  "headers": [
+    { "source": "/catalog.json", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }
+  ]
+}

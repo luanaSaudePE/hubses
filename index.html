@@ -177,14 +177,31 @@
             <i data-lucide="star" class="h-4 w-4"></i>
             Favoritos
           </button>
+          <button id="add-tool" type="button" class="add-btn h-12 rounded-xl border px-4 text-sm font-medium">Adicionar ferramenta</button>
         </div>
       </div>
       <p id="status" class="status mt-3 hidden text-sm" aria-live="polite"></p>
+      <p id="publication-status" class="status mt-3 text-sm" role="status">Carregando ferramentas...</p>
     </header>
 
     <main id="board" class="mt-10 space-y-10"></main>
   </div>
 
+  <dialog id="editor" class="w-[min(100%-2rem,30rem)] rounded-2xl border-0 bg-white p-6 text-slate-900 shadow-xl backdrop:bg-slate-950/60">
+    <form id="editor-form" class="space-y-4">
+      <h2 id="editor-title" class="text-xl font-semibold">Adicionar ferramenta</h2>
+      <p class="text-sm text-slate-500">Ao salvar, a alteração será publicada para todos. Isso pode levar alguns minutos.</p>
+      <label class="block text-sm">Nome<input id="tool-name" required maxlength="60" class="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900" /></label>
+      <label class="block text-sm">Link<input id="tool-url" type="url" maxlength="4096" placeholder="https://..." class="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900" /></label>
+      <label class="block text-sm">Categoria<select id="tool-category" class="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900"></select></label>
+      <label class="block text-sm">Senha de edição<input id="editor-password" type="password" required autocomplete="current-password" class="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-slate-900" /></label>
+      <p id="editor-error" class="text-sm text-rose-700" role="alert"></p>
+      <div class="flex justify-end gap-3">
+        <button id="editor-cancel" type="button" class="rounded-lg border px-4 py-2">Cancelar</button>
+        <button id="editor-save" type="submit" class="rounded-lg bg-violet-600 px-4 py-2 text-white disabled:opacity-50">Salvar e publicar</button>
+      </div>
+    </form>
+  </dialog>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script>
     const STORAGE_KEY = "ses-hub-v1";
@@ -196,25 +213,7 @@
       { id: "comunicacao", name: "Comunicação e Outros", short: "Comunicação" },
     ];
 
-    const DEFAULTS = [
-      { id: "redmine", name: "Redmine", url: "https://projetosti.saude.pe.gov.br/", category: "gestao", icon: "list-todo" },
-      { id: "miro", name: "Miro", url: "https://miro.com/app/board/uXjVJs_eJ3I=/", category: "gestao", icon: "presentation" },
-      { id: "cronograma", name: "Cronograma SM", url: "https://checklistsm.vercel.app/", category: "gestao", icon: "calendar-days" },
-      { id: "metricas", name: "Métricas", url: "https://metricassprint.vercel.app/#sp31", category: "gestao", icon: "chart-column" },
-      { id: "itsm", name: "Chamados ITSM", url: "https://itsm.saude.pe.gov.br/portalservicos/pages/experienceCenter/experienceCenter.load", category: "suporte", icon: "headset" },
-      { id: "manuais", name: "Manuais TI", url: "https://docsti.saude.pe.gov.br/", category: "suporte", icon: "book-open" },
-      { id: "sei", name: "SEI PE", url: "https://sei.pe.gov.br/sip/login.php?sigla_orgao_sistema=GOVPE&sigla_sistema=SEI", category: "suporte", icon: "file-text" },
-      { id: "onedrive", name: "OneDrive SES-PE", url: "https://onedrive.live.com/my?id=%2Fpersonal%2F070a22d7cd5c1ca2%2FDocuments%2FSES%2DPE&viewid=46a81358%2D6e82%2D4fdd%2D9922%2D491933ab4acd", category: "suporte", icon: "cloud" },
-      { id: "gemini", name: "Gemini", url: "https://gemini.google.com", category: "ia", icon: "sparkles" },
-      { id: "cursor", name: "Cursor", url: "https://cursor.com", category: "ia", icon: "terminal" },
-      { id: "claude", name: "Claude", url: "https://claude.ai", category: "ia", icon: "bot" },
-      { id: "chatgpt", name: "ChatGPT", url: "https://chatgpt.com", category: "ia", icon: "message-circle" },
-      { id: "manus", name: "Manus", url: "", category: "ia", icon: "cpu" },
-      { id: "figma", name: "Figma", url: "", category: "ia", icon: "pen-tool" },
-      { id: "email", name: "E-mail (SOGo)", url: "https://sogo.pe.gov.pe.gov.br/SOGo/so/luana.brito/Mail/view#!/Mail/0/INBOX", category: "comunicacao", icon: "mail" },
-      { id: "interna", name: "Ferramenta Interna", url: "", category: "comunicacao", icon: "wrench" },
-      { id: "sala", name: "Reserva de Sala", url: "", category: "comunicacao", icon: "door-open" },
-    ];
+    let catalog = [];
 
     const board = document.getElementById("board");
     const searchInput = document.getElementById("search");
@@ -264,7 +263,7 @@
     }
 
     function tools() {
-      return DEFAULTS;
+      return catalog;
     }
 
     function hostOf(url) {
@@ -363,6 +362,7 @@
         <article class="tool-card group relative flex items-start rounded-2xl border p-4 ${href ? "" : "is-empty"}">
           ${openControl}
           <span class="absolute right-3 top-3 z-10 flex items-center gap-1">
+            <button type="button" data-edit="${esc(tool.id)}" class="ghost-btn rounded-md p-1" aria-label="Editar ${esc(tool.name)}"><i data-lucide="pencil" class="h-3.5 w-3.5"></i></button>
             <button type="button" data-fav="${esc(tool.id)}" class="star-btn rounded-md p-1 ${favorite ? "is-on" : ""}" aria-label="${favorite ? "Remover dos favoritos" : "Favoritar"} ${esc(tool.name)}" aria-pressed="${favorite}">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-4 w-4" ${starFill} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </button>
@@ -413,6 +413,8 @@
         render();
         return;
       }
+      const edit = event.target.closest("[data-edit]");
+      if (edit) openEditor(tools().find(tool => tool.id === edit.getAttribute("data-edit")));
     });
 
     document.addEventListener("keydown", (event) => {
@@ -431,7 +433,99 @@
     });
 
     applyTheme(state.theme);
-    render();
+    const editor = document.getElementById("editor");
+    const editorForm = document.getElementById("editor-form");
+    const toolName = document.getElementById("tool-name");
+    const toolUrl = document.getElementById("tool-url");
+    const toolCategory = document.getElementById("tool-category");
+    const editorPassword = document.getElementById("editor-password");
+    const editorError = document.getElementById("editor-error");
+    const editorSave = document.getElementById("editor-save");
+    const publicationStatus = document.getElementById("publication-status");
+    let editingTool = null, requestId = null, saving = false, pending = null, loading = false;
+    toolCategory.innerHTML = CATEGORIES.map(category => `<option value="${category.id}">${esc(category.name)}</option>`).join("");
+
+    function openEditor(tool) {
+      if (saving) return;
+      editingTool = tool ? { ...tool } : null;
+      requestId = tool ? tool.id : `custom-${crypto.randomUUID()}`;
+      editorForm.reset();
+      document.getElementById("editor-title").textContent = tool ? "Editar ferramenta" : "Adicionar ferramenta";
+      toolName.value = tool?.name || "";
+      toolUrl.value = tool?.url || "";
+      toolCategory.value = tool?.category || CATEGORIES[0].id;
+      editorError.textContent = "";
+      editor.showModal();
+      toolName.focus();
+    }
+    document.getElementById("add-tool").addEventListener("click", () => openEditor(null));
+    document.getElementById("editor-cancel").addEventListener("click", () => { if (!saving) editor.close(); });
+    editor.addEventListener("cancel", event => { if (saving) event.preventDefault(); });
+    editor.addEventListener("close", () => { editorPassword.value = ""; });
+
+    async function refreshCatalog() {
+      if (loading) return;
+      loading = true;
+      try {
+        const response = await fetch('/catalog.json', { cache: 'no-store', signal: AbortSignal.timeout(12000) });
+        if (!response.ok) throw new Error('catalog');
+        const data = await response.json();
+        if (!Array.isArray(data.tools)) throw new Error('catalog');
+        catalog = data.tools;
+        render();
+        if (pending) {
+          const published = catalog.find(tool => tool.id === pending.tool.id);
+          if (published && ['name', 'url', 'category'].every(key => published[key] === pending.tool[key])) {
+            pending = null;
+            publicationStatus.textContent = "Publicado! A alteração já está disponível para todos.";
+          } else {
+            publicationStatus.textContent = Date.now() - pending.since > 180000
+              ? "Salvo no GitHub. A publicação ainda não foi confirmada; confira o deployment na Vercel."
+              : "Salvo no GitHub. Aguardando a publicação para todos...";
+          }
+        } else if (!publicationStatus.textContent.startsWith('Publicado!')) publicationStatus.textContent = '';
+      } catch {
+        publicationStatus.textContent = pending
+          ? 'Salvo no GitHub, mas não foi possível verificar a publicação. Tentaremos novamente.'
+          : 'Não foi possível atualizar as ferramentas. Tente recarregar a página.';
+      } finally { loading = false; }
+    }
+    editorForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (saving) return;
+      const tool = { name: toolName.value.trim(), url: toolUrl.value.trim(), category: toolCategory.value };
+      if (!tool.name || (tool.url && !safeUrl(tool.url))) {
+        editorError.textContent = 'Preencha o nome e use um endereço http:// ou https://.';
+        return;
+      }
+      saving = true;
+      editorSave.disabled = true;
+      editorSave.textContent = 'Salvando...';
+      editorError.textContent = '';
+      try {
+        const response = await fetch('/api/catalog', {
+          method: 'PUT', signal: AbortSignal.timeout(55000),
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${editorPassword.value}` },
+          body: JSON.stringify({ action: editingTool ? 'edit' : 'add', id: requestId, original: editingTool, tool }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || 'Não foi possível salvar. Tente novamente.');
+        pending = { tool: result.tool, since: Date.now() };
+        publicationStatus.textContent = 'Salvo no GitHub. Aguardando a publicação para todos...';
+        editor.close();
+        refreshCatalog();
+      } catch (error) {
+        editorError.textContent = error.name === 'TimeoutError'
+          ? 'O salvamento não foi confirmado. Tente novamente; isso não duplica a ferramenta.' : error.message;
+      } finally {
+        saving = false;
+        editorSave.disabled = false;
+        editorSave.textContent = 'Salvar e publicar';
+      }
+    });
+    refreshCatalog();
+    setInterval(() => { if (!document.hidden) refreshCatalog(); }, 15000);
+    window.addEventListener('focus', refreshCatalog);
   </script>
 </body>
 </html>

@@ -1,20 +1,30 @@
 # Central de acesso
 
-Aplicação estática, sem banco, API ou senha. Todos recebem os mesmos links publicados. Favoritos e tema são preferências individuais do navegador.
+Ferramentas compartilhadas, com edição pelo site e histórico no GitHub. Não utiliza banco de dados.
 
-## Alterar links para todos
+## Usar
 
-1. Abra `index.html` e procure `const DEFAULTS = [`.
-2. Altere o campo `url` da ferramenta desejada. Para adicionar uma ferramenta, inclua um item com `id` único, `name`, `url`, `category` e `icon`.
-3. Salve e publique o commit na branch de produção do repositório conectado à Vercel.
-4. Depois do deploy, todos que abrirem ou atualizarem a página receberão os novos links.
+Clique em **Adicionar ferramenta** ou no lápis de um cartão. Preencha nome, link, categoria e senha de edição. **Salvar e publicar** grava `catalog.json` na branch `main` do repositório `luanaSaudePE/hubses`. A integração Git da Vercel inicia uma publicação. O site confirma a publicação somente quando encontra os novos dados em produção; a verificação acontece a cada 15 segundos enquanto a página está visível.
 
-Endereços vazios aparecem como “Em breve”. Links personalizados antigos do navegador não substituem os endereços publicados. O armazenamento antigo é preservado, mas não usado para o catálogo.
+Favoritos e tema continuam individuais. Alterações antigas guardadas no navegador não substituem o catálogo publicado. Não coloque senhas ou URLs confidenciais no catálogo: os links são públicos.
 
-## Executar localmente
+## Ativar a edição
 
-Use `node server.cjs` e abra http://localhost:3000. Também é possível abrir `index.html` diretamente. Nenhuma variável de ambiente é necessária. Execute `node --test` para verificar o catálogo e as preferências.
+No GitHub, crie um personal access token **fine-grained**, limitado ao repositório `luanaSaudePE/hubses`, com a permissão de repositório **Contents: Read and write**. Defina uma validade e renove antes do vencimento.
 
-## Vercel
+No projeto `central` da Vercel, em **Settings → Environment Variables**, adicione para **Production**:
 
-O projeto `central` publica este repositório como site estático. Não é necessário conectar banco nem configurar senha. Mudanças no catálogo exigem uma nova publicação.
+- `HUB_GITHUB_TOKEN`: o token restrito ao repositório.
+- `HUB_ADMIN_PASSWORD`: uma senha exclusiva com pelo menos 16 caracteres.
+
+Cadastre os valores diretamente na Vercel, sem colocá-los em arquivos versionados ou no chat. Faça um novo deploy após configurar. Nenhum valor secreto é enviado ao navegador; a senha digitada é enviada somente à API do próprio site e não fica no armazenamento local.
+
+A API só pode alterar `catalog.json` na branch `main`; o cliente não escolhe o repositório ou caminho. Edições simultâneas em ferramentas diferentes são conciliadas; uma edição desatualizada da mesma ferramenta é recusada. Repetir um salvamento já concluído não cria duplicatas. Sem as variáveis, a consulta funciona e a gravação mostra que a edição ainda precisa ser ativada.
+
+## Desenvolvimento
+
+Execute `node server.cjs` e abra http://localhost:3000. Sem variáveis, é possível testar a consulta e os formulários. `.env.local` pode configurar a API, mas gravar usando credenciais reais altera o repositório e dispara um deploy de produção. O servidor local lê seu próprio `catalog.json`, que só recebe os commits feitos pelo site depois de `git pull`.
+
+Execute `node --test`. Antes de modificar o código, sincronize `main` com `git pull --ff-only`, pois as edições pelo site criam commits no GitHub.
+
+Se o site continuar aguardando publicação, confira o deployment da Vercel. O commit pode ter sido salvo mesmo que a publicação tenha falhado. Não há garantia de atualização imediata.
