@@ -24,7 +24,7 @@
     {
       "id": "metricas",
       "name": "Métricas",
-      "url": "https://metricassprint.vercel.app",
+      "url": "https://sistemademetricas.vercel.app",
       "category": "gestao",
       "icon": "chart-column"
     },
@@ -120,5 +120,5 @@
       "icon": "door-open"
     }
   ],
-  "revision": "b7b42557-79d0-4369-889d-2d8aeaa9aac7"
+  "revision": "74dee4e3-ab3a-456e-ba0f-494cfa24eb67"
 }
